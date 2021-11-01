@@ -32,12 +32,12 @@ set background=dark
 " "" For Neovim 0.1.3 and 0.1.4
 " let $NVIM_TUI_ENABLE_TRUE_COLOR = 1
 " let $NVIM_TUI_ENABLE_CURSOR_SHAPE = 0
-" 
+"
 " " Or if you have Neovim >= 0.1.5
 " if (has("termguicolors"))
 "  set termguicolors
 " endif
-" 
+"
 syntax enable
 " colorscheme OceanicNext
 colorscheme gruvbox
@@ -53,32 +53,22 @@ lua <<EOF
   -- lsp setting -------------------------------------------------------------
   local nvim_lsp = require('lspconfig')
 
-  local lsp_installer = require("nvim-lsp-installer")
-  lsp_installer.on_server_ready(function(server)
-      local opts = {}
-  
-      -- (optional) Customize the options passed to the server
-      -- if server.name == "tsserver" then
-      --     opts.root_dir = function() ... end
-      -- end
-  
-      -- This setup() function is exactly the same as lspconfig's setup function (:help lspconfig-quickstart)
-      server:setup(opts)
-      vim.cmd [[ do User LspAttachBuffers ]]
-  end)
-  
   -- Use an on_attach function to only map the following keys
   -- after the language server attaches to the current buffer
-  local on_attach = function(client, bufnr)
-    local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
-    local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
-  
+  local my_custom_on_attach = function(client, bufnr)
+    local function buf_set_keymap(...)
+      vim.api.nvim_buf_set_keymap(bufnr, ...)
+    end
+    local function buf_set_option(...)
+      vim.api.nvim_buf_set_option(bufnr, ...)
+    end
+
     -- Enable completion triggered by <c-x><c-o>
     buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
-  
+
     -- Mappings.
     local opts = { noremap=true, silent=true }
-  
+
     -- See `:help vim.lsp.*` for documentation on any of the below functions
     buf_set_keymap('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
     buf_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
@@ -97,7 +87,7 @@ lua <<EOF
     buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
     buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
     buf_set_keymap('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
-  
+
   end
 
   -- Setup nvim-cmp. ---------------------------------------------------------
@@ -134,8 +124,27 @@ lua <<EOF
   -- nvim-cmp supports additional completion capabilities
   local capabilities = vim.lsp.protocol.make_client_capabilities()
   capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
-  
-  -- Enable some language servers with the additional completion capabilities offered by nvim-cmp
+
+  -- lsp installer
+  local lsp_installer = require("nvim-lsp-installer")
+  lsp_installer.on_server_ready(function(server)
+    local opts = {
+    	on_attach = my_custom_on_attach,
+    	capabilities = capabilities,
+    }
+
+    -- (optional) Customize the options passed to the server
+    -- if server.name == "tsserver" then
+    --     opts.root_dir = function() ... end
+    -- end
+
+    -- This setup() function is exactly the same as lspconfig's setup function (:help lspconfig-quickstart)
+    server:setup(opts)
+    vim.cmd [[ do User LspAttachBuffers ]]
+  end)
+
+  -- Enable some language servers with the additional completion capabilities
+  -- offered by nvim-cmp
   local servers = { 'clangd', 'rust_analyzer', 'pyright' }
   for _, lsp in ipairs(servers) do
     nvim_lsp[lsp].setup {
@@ -170,7 +179,7 @@ inoremap <F6> <C-R>=strftime("%c")<CR>
 set number
 
 " Remove trailing whitespaces with F5
-nnoremap <silent> <F5> :let _s=@/<Bar>:%s/\s\+$//e<Bar>:let @/=_s<Bar>:nohl<CR> 
+nnoremap <silent> <F5> :let _s=@/<Bar>:%s/\s\+$//e<Bar>:let @/=_s<Bar>:nohl<CR>
 
 " Use spaces
 set expandtab
