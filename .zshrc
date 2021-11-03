@@ -1,71 +1,109 @@
+# Personal Zsh configuration file. It is strongly recommended to keep all
+# shell customization and configuration (including exported environment
+# variables such as PATH) in this file or in files source by it.
+#
+# Documentation: https://github.com/romkatv/zsh4humans/blob/v5/README.md.
 
-### Added by Zinit's installer
-if [[ ! -f $HOME/.zinit/bin/zinit.zsh ]]; then
-    print -P "%F{33}▓▒░ %F{220}Installing %F{33}DHARMA%F{220} Initiative Plugin Manager (%F{33}zdharma/zinit%F{220})…%f"
-    command mkdir -p "$HOME/.zinit" && command chmod g-rwX "$HOME/.zinit"
-    command git clone https://github.com/zdharma/zinit "$HOME/.zinit/bin" && \
-        print -P "%F{33}▓▒░ %F{34}Installation successful.%f%b" || \
-        print -P "%F{160}▓▒░ The clone has failed.%f%b"
-fi
+# Periodic auto-update on Zsh startup: 'ask' or 'no'.
+# You can manually run `z4h update` to update everything.
+zstyle ':z4h:' auto-update      'no'
+# Ask whether to auto-update this often; has no effect if auto-update is 'no'.
+zstyle ':z4h:' auto-update-days '28'
 
-source "$HOME/.zinit/bin/zinit.zsh"
-autoload -Uz _zinit
-(( ${+_comps} )) && _comps[zinit]=_zinit
+# Start tmux if not already in tmux.
+zstyle ':z4h:' start-tmux       command tmux -u new -A -D -t z4h
 
-# Load a few important annexes, without Turbo
-# (this is currently required for annexes)
-zinit light-mode for \
-    zinit-zsh/z-a-rust \
-    zinit-zsh/z-a-as-monitor \
-    zinit-zsh/z-a-patch-dl \
-    zinit-zsh/z-a-bin-gem-node
+# Move prompt to the bottom when zsh starts and on Ctrl+L.
+zstyle ':z4h:' prompt-at-bottom 'yes'
 
-### End of Zinit's installer chunk
+# Keyboard type: 'mac' or 'pc'.
+zstyle ':z4h:bindkey' keyboard  'pc'
 
-# HISTORY SUBSTRING SEARCHING
-zinit light zsh-users/zsh-history-substring-search
-bindkey '^[[A' history-substring-search-up
-bindkey '^[OA' history-substring-search-up
-bindkey '^[[B' history-substring-search-down
-bindkey '^[OB' history-substring-search-down
+# Right-arrow key accepts one character ('partial-accept') from
+# command autosuggestions or the whole thing ('accept')?
+zstyle ':z4h:autosuggestions' forward-char 'accept'
 
-# A glance at the new for-syntax – load all the
-# plugins with a single command. For more information see:
-# https://zdharma.github.io/zinit/wiki/For-Syntax/
-zinit for \
-    light-mode  zsh-users/zsh-autosuggestions \
-    light-mode  zdharma/fast-syntax-highlighting \
-                zdharma/history-search-multi-word \
-    light-mode pick"async.zsh" src"pure.zsh" \
-                sindresorhus/pure \
+# Recursively traverse directories when TAB-completing files.
+zstyle ':z4h:fzf-complete' recurse-dirs 'yes'
 
-zinit ice wait"0b" lucid blockf
-zinit light zsh-users/zsh-completions
-zstyle ':completion:*' menu select=2
-zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
-zstyle ':completion:*' completer _expand _complete _ignored _approximate
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
-zstyle ':completion:*' select-prompt '%SScrolling active: current selection at %p%s'
-# zstyle ':completion:*:descriptions' format '-- %d --'
-# zstyle ':completion:*:processes' command 'ps -au$USER'
-# zstyle ':completion:complete:*:options' sort false
-# zstyle ':fzf-tab:complete:_zlua:*' query-string input
-# zstyle ':completion:*:*:*:*:processes' command "ps -u $USER -o pid,user,comm,cmd -w -w"
-# zstyle ':fzf-tab:complete:kill:argument-rest' extra-opts --preview=$extract'ps --pid=$in[(w)1] -o cmd --no-headers -w -w' --preview-window=down:3:wrap
-# zstyle ":completion:*:git-checkout:*" sort false
+# Enable direnv to automatically source .envrc files.
+zstyle ':z4h:direnv'         enable 'no'
+# Show "loading" and "unloading" notifications from direnv.
+zstyle ':z4h:direnv:success' notify 'yes'
 
-# Better ls: exa
-# Installs rust and then the `exa' crate and creates
-# the `ls' shim exposing the `exa' binary
-zinit ice cargo'!exa -> ls'
-zinit load zdharma/null
+# Enable ('yes') or disable ('no') automatic teleportation of z4h over
+# ssh when connecting to these hosts.
+zstyle ':z4h:ssh:example-hostname1'   enable 'yes'
+zstyle ':z4h:ssh:*.example-hostname2' enable 'no'
+# The default value if none of the overrides above match the hostname.
+zstyle ':z4h:ssh:*'                   enable 'no'
 
-# Binary release in archive, from GitHub-releases page.
-# After automatic unpacking it provides program "fzf".
-zinit ice from"gh-r" as"program"
-zinit load junegunn/fzf-bin
+# Send these files over to the remote host when connecting over ssh to the
+# enabled hosts.
+zstyle ':z4h:ssh:*' send-extra-files '~/.nanorc' '~/.env.zsh'
 
-# SETOPT ......................................................................
+# Clone additional Git repositories from GitHub.
+#
+# This doesn't do anything apart from cloning the repository and keeping it
+# up-to-date. Cloned files can be used after `z4h init`. This is just an
+# example. If you don't plan to use Oh My Zsh, delete this line.
+z4h install ohmyzsh/ohmyzsh || return
+
+# Install or update core components (fzf, zsh-autosuggestions, etc.) and
+# initialize Zsh. After this point console I/O is unavailable until Zsh
+# is fully initialized. Everything that requires user interaction or can
+# perform network I/O must be done above. Everything else is best done below.
+z4h init || return
+
+# Extend PATH.
+path=(~/bin $path)
+
+# Export environment variables.
+export GPG_TTY=$TTY
+
+# Source additional local files if they exist.
+z4h source ~/.env.zsh
+
+# Use additional Git repositories pulled in with `z4h install`.
+#
+# This is just an example that you should delete. It does nothing useful.
+# z4h source ohmyzsh/ohmyzsh/lib/diagnostics.zsh  # source an individual file
+# z4h load   ohmyzsh/ohmyzsh/plugins/emoji-clock  # load a plugin
+
+# Define key bindings.
+z4h bindkey z4h-backward-kill-word  Ctrl+Backspace Ctrl+H
+z4h bindkey z4h-backward-kill-zword Ctrl+Alt+Backspace
+
+z4h bindkey undo Ctrl+/  # undo the last command line change
+z4h bindkey redo Alt+/   # redo the last undone command line change
+
+z4h bindkey z4h-cd-back    Alt+Left   # cd into the previous directory
+z4h bindkey z4h-cd-forward Alt+Right  # cd into the next directory
+z4h bindkey z4h-cd-up      Alt+Up     # cd into the parent directory
+z4h bindkey z4h-cd-down    Alt+Down   # cd into a child directory
+
+# Autoload functions.
+autoload -Uz zmv
+
+# Define functions and completions.
+function md() { [[ $# == 1 ]] && mkdir -p -- "$1" && cd -- "$1" }
+compdef _directories md
+
+# Define named directories: ~w <=> Windows home directory on WSL.
+[[ -z $z4h_win_home ]] || hash -d w=$z4h_win_home
+
+# Define aliases.
+alias tree='tree -a -I .git'
+
+# Add flags to existing aliases.
+# alias ls="${aliases[ls]:-ls} -A"
+
+# Set shell options: http://zsh.sourceforge.net/Doc/Release/Options.html.
+setopt glob_dots     # no special treatment for file names with a leading dot
+setopt no_auto_menu  # require an extra TAB press to open the completion menu
+
+# -----------------------------------------------------------------------------
+
 setopt extended_history       # record timestamp of command in HISTFILE
 setopt hist_expire_dups_first # delete duplicates first when HISTFILE size exceeds HISTSIZE
 setopt hist_ignore_all_dups   # ignore duplicated commands history list
@@ -75,9 +113,7 @@ setopt inc_append_history     # add commands to HISTFILE in order of execution
 setopt share_history          # share command history data
 setopt always_to_end          # cursor moved to the end in full completion
 setopt hash_list_all          # hash everything before completion
-# setopt completealiases        # complete alisases
 
-# -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 
 # TILIX
