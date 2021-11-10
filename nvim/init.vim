@@ -137,6 +137,43 @@ lua <<EOF
     -- if server.name == "tsserver" then
     --     opts.root_dir = function() ... end
     -- end
+    if server.name == "pyright" then
+        -- print(opts.filetypes)
+        -- opts.filetypes.python = "flake8"
+    end
+
+    if server.name == "diagnosticls" then
+      opts.settings = {
+        filetypes = { python = {"flake8"} },
+        linters = {
+          flake8 = {
+            debounce = 100,
+            sourceName = "flake8",
+            command = "flake8",
+            args = {
+              "--format",
+              "%(row)d:%(col)d:%(code)s:%(code)s: %(text)s",
+              "%file",
+            },
+            formatPattern = {
+              "^(\\d+):(\\d+):(\\w+):(\\w).+: (.*)$",
+              {
+                  line = 1,
+                  column = 2,
+                  message = {"[", 3, "] ", 5},
+                  security = 4
+              }
+            },
+            securities = {
+              E = "error",
+              W = "warning",
+              F = "info",
+              B = "hint",
+            },
+          },
+        }
+      }
+    end
 
     -- This setup() function is exactly the same as lspconfig's setup function (:help lspconfig-quickstart)
     server:setup(opts)
