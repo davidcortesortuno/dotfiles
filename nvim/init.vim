@@ -23,6 +23,9 @@ Plug 'hrsh7th/nvim-cmp'
 Plug 'hrsh7th/cmp-vsnip'
 Plug 'hrsh7th/vim-vsnip'
 
+Plug 'nvim-lua/plenary.nvim'
+Plug 'jose-elias-alvarez/null-ls.nvim'
+
 " Add plugins to &runtimepath
 call plug#end()
 
@@ -142,56 +145,57 @@ lua <<EOF
         -- opts.filetypes.python = "flake8"
     end
 
-    if server.name == "diagnosticls" then
-      opts.settings = {
-        filetypes = { python = {"flake8"} },
-        linters = {
-          flake8 = {
-            debounce = 100,
-            sourceName = "flake8",
-            command = "flake8",
-            args = {
-              "--format",
-              "%(row)d:%(col)d:%(code)s:%(code)s: %(text)s",
-              "%file",
-            },
-            formatPattern = {
-              "^(\\d+):(\\d+):(\\w+):(\\w).+: (.*)$",
-              {
-                  line = 1,
-                  column = 2,
-                  message = {"[", 3, "] ", 5},
-                  security = 4
-              }
-            },
-            securities = {
-              E = "error",
-              W = "warning",
-              F = "info",
-              B = "hint",
-            },
-          },
-        }
-      }
-    end
+    -- if server.name == "diagnosticls" then
+    --   opts.settings = {
+    --     filetypes = { python = {"flake8"} },
+    --     linters = {
+    --       flake8 = {
+    --         debounce = 100,
+    --         sourceName = "flake8",
+    --         command = "flake8",
+    --         args = {
+    --           "--format",
+    --           "%(row)d:%(col)d:%(code)s:%(code)s: %(text)s",
+    --           "%file",
+    --         },
+    --         formatPattern = {
+    --           "^(\\d+):(\\d+):(\\w+):(\\w).+: (.*)$",
+    --           {
+    --               line = 1,
+    --               column = 2,
+    --               message = {"[", 3, "] ", 5},
+    --               security = 4
+    --           }
+    --         },
+    --         securities = {
+    --           E = "error",
+    --           W = "warning",
+    --           F = "info",
+    --           B = "hint",
+    --         },
+    --       },
+    --     }
+    --   }
+    -- end
 
-    -- This setup() function is exactly the same as lspconfig's setup function (:help lspconfig-quickstart)
+    -- This setup() function is exactly the same as lspconfig's setup function
+    -- (:help lspconfig-quickstart)
     server:setup(opts)
     vim.cmd [[ do User LspAttachBuffers ]]
   end)
 
-  -- Enable some language servers with the additional completion capabilities
-  -- offered by nvim-cmp
-  local servers = { 'clangd', 'rust_analyzer', 'pyright' }
-  for _, lsp in ipairs(servers) do
-    nvim_lsp[lsp].setup {
-      on_attach = my_custom_on_attach,
-      capabilities = capabilities,
-    }
-  end
-
   -- Set completeopt to have a better completion experience
   vim.o.completeopt = 'menuone,noselect'
+
+  -- null-ls configuration:
+  require("null-ls").config({
+      -- you must define at least one source for the plugin to work
+      sources = { require("null-ls").builtins.diagnostics.flake8 }
+  })
+  nvim_lsp["null-ls"].setup({
+      -- see the nvim-lspconfig documentation for available configuration options
+      on_attach = my_custom_on_attach
+  })
 
 EOF
 
