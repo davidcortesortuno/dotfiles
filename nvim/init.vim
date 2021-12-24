@@ -20,8 +20,11 @@ Plug 'hrsh7th/cmp-nvim-lsp'
 Plug 'hrsh7th/cmp-buffer'
 Plug 'hrsh7th/nvim-cmp'
 " For vsnip users.
-Plug 'hrsh7th/cmp-vsnip'
-Plug 'hrsh7th/vim-vsnip'
+" Plug 'hrsh7th/cmp-vsnip'
+" Plug 'hrsh7th/vim-vsnip'
+Plug 'L3MON4D3/LuaSnip'
+Plug 'saadparwaiz1/cmp_luasnip'
+Plug 'rafamadriz/friendly-snippets'
 
 Plug 'nvim-lua/plenary.nvim'
 Plug 'jose-elias-alvarez/null-ls.nvim'
@@ -52,6 +55,13 @@ filetype indent plugin on
 set completeopt=menu,menuone,noselect
 
 lua <<EOF
+
+  -- Setup luasnip -----------------------------------------------------------
+  local luasnip = require('luasnip')
+  -- snippets from json files
+  require("luasnip.loaders.from_vscode").lazy_load()
+  luasnip.filetype_set("cu", { "c", "cpp" })
+  -- print(cmp.core.sources)
 
   -- lsp setting -------------------------------------------------------------
   local nvim_lsp = require('lspconfig')
@@ -99,8 +109,8 @@ lua <<EOF
   cmp.setup({
     snippet = {
       expand = function(args)
-        vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
-        -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
+        -- vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
+        require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
         -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
         -- require'snippy'.expand_snippet(args.body) -- For `snippy` users.
       end,
@@ -114,8 +124,8 @@ lua <<EOF
     },
     sources = cmp.config.sources({
       { name = 'nvim_lsp' },
-      { name = 'vsnip' }, -- For vsnip users.
-      -- { name = 'luasnip' }, -- For luasnip users.
+      -- { name = 'vsnip' }, -- For vsnip users.
+      { name = 'luasnip' }, -- For luasnip users.
       -- { name = 'ultisnips' }, -- For ultisnips users.
       -- { name = 'snippy' }, -- For snippy users.
     }, {
@@ -188,21 +198,24 @@ lua <<EOF
   vim.o.completeopt = 'menuone,noselect'
 
   -- null-ls configuration:
-  require("null-ls").config({
+  require("null-ls").setup({
       -- you must define at least one source for the plugin to work
-      sources = { require("null-ls").builtins.diagnostics.flake8 }
-  })
-  nvim_lsp["null-ls"].setup({
-      -- see the nvim-lspconfig documentation for available configuration options
+      sources = { 
+          require("null-ls").builtins.diagnostics.flake8 
+      },
       on_attach = my_custom_on_attach
   })
+  -- nvim_lsp["null-ls"].setup({
+  --     -- see the nvim-lspconfig documentation for available configuration options
+  --     on_attach = my_custom_on_attach
+  -- })
 
   -- Avoid diagnostic messages inline -> Use space+e
   vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
   	vim.lsp.diagnostic.on_publish_diagnostics, {
-  		virtual_text = false,
-  		underline = true,
-  		signs = true,
+  	  virtual_text = false,
+  	  underline = true,
+	  signs = true,
   	}
   )
 
