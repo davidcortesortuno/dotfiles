@@ -50,20 +50,26 @@ colorscheme gruvbox
 
 filetype indent plugin on
 
-" cmp -------------------------------------------------------------------------
+lua << EOF
 
-set completeopt=menu,menuone,noselect
+  -- spell
+  vim.opt.spell = false
+  vim.opt.spelllang = { 'en_gb' }
 
-lua <<EOF
+  -- cmp ----------------------------------------------------------------------
 
-  -- Setup luasnip -----------------------------------------------------------
+  -- Set completeopt to have a better completion experience
+  vim.opt.completeopt = 'menuone,noselect'
+  -- vim.opt.completeopt = "menu,menuone,noselect"
+
+  -- Setup luasnip ------------------------------------------------------------
   local luasnip = require('luasnip')
   -- snippets from json files
   require("luasnip.loaders.from_vscode").lazy_load()
   luasnip.filetype_set("cu", { "c", "cpp" })
   -- print(cmp.core.sources)
 
-  -- lsp setting -------------------------------------------------------------
+  -- lsp setting --------------------------------------------------------------
   local nvim_lsp = require('lspconfig')
 
   -- Use an on_attach function to only map the following keys
@@ -86,7 +92,11 @@ lua <<EOF
     buf_set_keymap('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
     buf_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
     buf_set_keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
+    -- Lists all the implementations for the symbol under the cursor
     buf_set_keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
+    -- Lists all the references
+    buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
+    -- Displays a function's signature information
     buf_set_keymap('n', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
     buf_set_keymap('n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
     buf_set_keymap('n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
@@ -94,8 +104,7 @@ lua <<EOF
     buf_set_keymap('n', '<space>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
     buf_set_keymap('n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
     buf_set_keymap('n', '<space>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
-    buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
-    buf_set_keymap('n', '<space>e', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
+    buf_set_keymap('n', '<space>e', '<cmd>lua vim.diagnostic.open_float()<CR>', opts)
     buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
     buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
     buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
@@ -103,8 +112,29 @@ lua <<EOF
 
   end
 
+  -- nvim-cmp supports additional completion capabilities
+  local capabilities = vim.lsp.protocol.make_client_capabilities()
+  capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+
+  -- -------------------------------------------------------------------------
+  -- lsp installer
+  local lsp_installer = require("nvim-lsp-installer")
+  lsp_installer.on_server_ready(function(server)
+    local opts = {
+    	on_attach = my_custom_on_attach,
+    	capabilities = capabilities
+    }
+    opts.settings = {
+      format = {enable = true},
+    }
+    -- This setup() function is exactly the same as lspconfig's setup function
+    -- (:help lspconfig-quickstart)
+    server:setup(opts)
+    -- vim.cmd [[ do User LspAttachBuffers ]]
+  end)
+
   -- Setup nvim-cmp. ---------------------------------------------------------
-  local cmp = require'cmp'
+  local cmp = require('cmp')
 
   cmp.setup({
     snippet = {
@@ -116,11 +146,26 @@ lua <<EOF
       end,
     },
     mapping = {
-      ['<C-d>'] = cmp.mapping.scroll_docs(-4),
+      ['<Tab>'] = cmp.mapping(function(fallback)
+        if cmp.visible() then
+          cmp.select_next_item()
+        else
+          fallback()
+        end
+      end),
+
+      ['<Up>'] = cmp.mapping.select_prev_item(select_opts),
+      ['<Down>'] = cmp.mapping.select_next_item(select_opts),
+      ['<C-p>'] = cmp.mapping.select_prev_item(select_opts),
+      ['<C-n>'] = cmp.mapping.select_next_item(select_opts),
+      ['<C-b>'] = cmp.mapping.scroll_docs(-4),
       ['<C-f>'] = cmp.mapping.scroll_docs(4),
+      ['<C-e>'] = cmp.mapping.abort(),
+      ['<CR>'] = cmp.mapping.confirm({select = true}),
       ['<C-Space>'] = cmp.mapping.complete(),
-      ['<C-e>'] = cmp.mapping.close(),
-      ['<CR>'] = cmp.mapping.confirm({ select = true }),
+    },
+    view = {
+      entries = 'native'
     },
     sources = cmp.config.sources({
       { name = 'nvim_lsp' },
@@ -130,78 +175,30 @@ lua <<EOF
       -- { name = 'snippy' }, -- For snippy users.
     }, {
       { name = 'buffer' },
+      { name = 'path' },
+      -- Notice that spell requires: vim.opt.spell = true
+      { name = 'spell' },
     })
   })
 
-  -- Setup lspconfig.
-  -- nvim-cmp supports additional completion capabilities
-  local capabilities = vim.lsp.protocol.make_client_capabilities()
-  capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
-  -- lsp installer
-  local lsp_installer = require("nvim-lsp-installer")
-  lsp_installer.on_server_ready(function(server)
-    local opts = {
-    	on_attach = my_custom_on_attach,
-    	capabilities = capabilities,
-    }
-
-    -- (optional) Customize the options passed to the server
-    -- if server.name == "tsserver" then
-    --     opts.root_dir = function() ... end
-    -- end
-    if server.name == "pyright" then
-        -- print(opts.filetypes)
-        -- opts.filetypes.python = "flake8"
-    end
-
-    -- if server.name == "diagnosticls" then
-    --   opts.settings = {
-    --     filetypes = { python = {"flake8"} },
-    --     linters = {
-    --       flake8 = {
-    --         debounce = 100,
-    --         sourceName = "flake8",
-    --         command = "flake8",
-    --         args = {
-    --           "--format",
-    --           "%(row)d:%(col)d:%(code)s:%(code)s: %(text)s",
-    --           "%file",
-    --         },
-    --         formatPattern = {
-    --           "^(\\d+):(\\d+):(\\w+):(\\w).+: (.*)$",
-    --           {
-    --               line = 1,
-    --               column = 2,
-    --               message = {"[", 3, "] ", 5},
-    --               security = 4
-    --           }
-    --         },
-    --         securities = {
-    --           E = "error",
-    --           W = "warning",
-    --           F = "info",
-    --           B = "hint",
-    --         },
-    --       },
-    --     }
-    --   }
-    -- end
-
-    -- This setup() function is exactly the same as lspconfig's setup function
-    -- (:help lspconfig-quickstart)
-    server:setup(opts)
-    vim.cmd [[ do User LspAttachBuffers ]]
-  end)
-
-  -- Set completeopt to have a better completion experience
-  vim.o.completeopt = 'menuone,noselect'
+  -- This assumes `ccls` exists on path
+  -- nvim_lsp.ccls.setup {
+  --   on_attach = my_custom_on_attach,
+  --   capabilities = capabilities,
+  --   filetypes = {"c", "cpp"},
+  --   init_options = {
+  --     cache = {
+  --       directory = ".ccls-cache";
+  --     };
+  --   }
+  -- }
 
   -- null-ls configuration:
   require("null-ls").setup({
       -- you must define at least one source for the plugin to work
-      sources = { 
-          require("null-ls").builtins.diagnostics.flake8 
+      sources = {
+          require("null-ls").builtins.diagnostics.flake8
       },
       on_attach = my_custom_on_attach
   })
@@ -211,15 +208,19 @@ lua <<EOF
   -- })
 
   -- Avoid diagnostic messages inline -> Use space+e
-  vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-  	vim.lsp.diagnostic.on_publish_diagnostics, {
-  	  virtual_text = false,
-  	  underline = true,
-	  signs = true,
-  	}
-  )
+  vim.diagnostic.config({
+    virtual_text = false,
+  	underline = true,
+	signs = true,
+    float = {
+      show_header = true,
+      source = 'always',
+      border = 'rounded',
+      focusable = false,
+    },
+  })
 
-  vim.cmd [[autocmd CursorHold * lua vim.lsp.diagnostic.show_line_diagnostics()]]
+  vim.cmd [[autocmd CursorHold * lua vim.diagnostic.open_float()]]
   vim.cmd [[autocmd CursorHoldI * silent! lua vim.lsp.buf.signature_help()]]
 
 EOF
