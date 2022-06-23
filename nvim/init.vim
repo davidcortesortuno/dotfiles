@@ -1,9 +1,14 @@
 call plug#begin('~/.nvim/plugged')
 
 " Make sure you use single quotes
-"
+
+" Colorschemes
 Plug 'mhartington/oceanic-next'
-Plug 'morhetz/gruvbox'
+" Gruvbox with tree-sitter support
+Plug 'ellisonleao/gruvbox.nvim'
+Plug 'EdenEast/nightfox.nvim'
+Plug 'rebelot/kanagawa.nvim'
+
 Plug 'lervag/vimtex'
 " Plug 'Shougo/neosnippet-snippets'
 " Plug 'neomake/neomake'
@@ -29,30 +34,59 @@ Plug 'rafamadriz/friendly-snippets'
 Plug 'nvim-lua/plenary.nvim'
 Plug 'jose-elias-alvarez/null-ls.nvim'
 
+" Treesitter for better highlight
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+
 " Add plugins to &runtimepath
 call plug#end()
 
 " Theme ----------------------------------------------------------------------
 set background=dark
-
-" "" For Neovim 0.1.3 and 0.1.4
-" let $NVIM_TUI_ENABLE_TRUE_COLOR = 1
-" let $NVIM_TUI_ENABLE_CURSOR_SHAPE = 0
-"
-" " Or if you have Neovim >= 0.1.5
-" if (has("termguicolors"))
-"  set termguicolors
-" endif
-"
-syntax enable
+" syntax enable
 " colorscheme OceanicNext
-colorscheme gruvbox
+" colorscheme gruvbox
+colorscheme kanagawa
+" colorscheme terafox
+
+
+
 
 filetype indent plugin on
 
 lua << EOF
 
-  -- spell
+  -- Treesitter ---------------------------------------------------------------
+  require('nvim-treesitter.configs').setup {
+    -- A list of parser names, or "all"
+    ensure_installed = { "c", "lua", "rust", "python" },
+  
+    -- Install parsers synchronously (only applied to `ensure_installed`)
+    sync_install = false,
+  
+    -- List of parsers to ignore installing (for "all")
+    -- ignore_install = { "javascript" },
+  
+    highlight = {
+      -- `false` will disable the whole extension
+      enable = true,
+  
+      -- NOTE: these are the names of the parsers and not the filetype. (for
+      -- example if you want to disable highlighting for the `tex` filetype,
+      -- you need to include `latex` in this list as this is -- the name of the
+      -- parser)
+
+      -- list of language that will be disabled
+      -- disable = { "c", "rust" },
+  
+      -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
+      -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
+      -- Using this option may slow down your editor, and you may see some duplicate highlights.
+      -- Instead of true it can also be a list of languages
+      additional_vim_regex_highlighting = false,
+    },
+  }
+
+  -- spell --------------------------------------------------------------------
   vim.opt.spell = false
   vim.opt.spelllang = { 'en_gb' }
 
@@ -105,8 +139,8 @@ lua << EOF
     buf_set_keymap('n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
     buf_set_keymap('n', '<space>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
     buf_set_keymap('n', '<space>e', '<cmd>lua vim.diagnostic.open_float()<CR>', opts)
-    buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
-    buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
+    buf_set_keymap('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
+    buf_set_keymap('n', ']d', '<cmd>lua vim.diagnostic.goto_next()<CR>', opts)
     buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
     buf_set_keymap('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
 
