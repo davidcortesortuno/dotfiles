@@ -3,15 +3,14 @@ call plug#begin('~/.nvim/plugged')
 " Make sure you use single quotes
 
 " Colorschemes
-Plug 'mhartington/oceanic-next'
 " Gruvbox with tree-sitter support
 Plug 'ellisonleao/gruvbox.nvim'
-Plug 'EdenEast/nightfox.nvim'
 Plug 'rebelot/kanagawa.nvim'
 
-Plug 'lervag/vimtex'
-" Plug 'Shougo/neosnippet-snippets'
-" Plug 'neomake/neomake'
+" Treesitter for better highlight
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+" Make treesitter work with nvim spell
+Plug 'lewis6991/spellsitter.nvim'
 
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
@@ -21,12 +20,10 @@ Plug 'tpope/vim-surround'
 Plug 'neovim/nvim-lspconfig'
 " Install language servers automatically:
 Plug 'williamboman/nvim-lsp-installer'
+
 Plug 'hrsh7th/cmp-nvim-lsp'
 Plug 'hrsh7th/cmp-buffer'
 Plug 'hrsh7th/nvim-cmp'
-" For vsnip users.
-" Plug 'hrsh7th/cmp-vsnip'
-" Plug 'hrsh7th/vim-vsnip'
 Plug 'L3MON4D3/LuaSnip'
 Plug 'saadparwaiz1/cmp_luasnip'
 Plug 'rafamadriz/friendly-snippets'
@@ -34,34 +31,49 @@ Plug 'rafamadriz/friendly-snippets'
 Plug 'nvim-lua/plenary.nvim'
 Plug 'jose-elias-alvarez/null-ls.nvim'
 
-" Treesitter for better highlight
-Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-
 " Add plugins to &runtimepath
 call plug#end()
 
 " Theme ----------------------------------------------------------------------
-set background=dark
+" set background=dark
 " syntax enable
-" colorscheme OceanicNext
 " colorscheme gruvbox
 colorscheme kanagawa
-" colorscheme terafox
-
-
-
 
 filetype indent plugin on
 
 lua << EOF
 
+  -- Colorscheme
+  local default_colors = require("kanagawa.colors").setup()
+  
+  -- this will affect all the hl-groups where the redefined colors are used
+  local my_colors = {
+      -- use the palette color name...
+      -- sumiInk1 = "black",
+      fujiWhite = "#FBEED3",
+      fujiGray = "#9D9D9E",  -- comments
+  }
+  require'kanagawa'.setup({ 
+    commentStyle = { italic = false },
+    overrides = overrides,
+    colors = my_colors
+  })
+  vim.cmd("colorscheme kanagawa")
+
   -- Treesitter ---------------------------------------------------------------
+
+  -- Nvim spell with treesitter
+  require('spellsitter').setup()
+  vim.opt.spell = true
+  vim.opt.spelllang = { 'en_gb' }
+
   require('nvim-treesitter.configs').setup {
     -- A list of parser names, or "all"
     ensure_installed = { "c", "lua", "rust", "python" },
   
     -- Install parsers synchronously (only applied to `ensure_installed`)
-    sync_install = false,
+    sync_install = true,
   
     -- List of parsers to ignore installing (for "all")
     -- ignore_install = { "javascript" },
@@ -82,13 +94,9 @@ lua << EOF
       -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
       -- Using this option may slow down your editor, and you may see some duplicate highlights.
       -- Instead of true it can also be a list of languages
-      additional_vim_regex_highlighting = false,
-    },
+      -- additional_vim_regex_highlighting = false,
+    }
   }
-
-  -- spell --------------------------------------------------------------------
-  vim.opt.spell = false
-  vim.opt.spelllang = { 'en_gb' }
 
   -- cmp ----------------------------------------------------------------------
 
@@ -203,15 +211,11 @@ lua << EOF
     },
     sources = cmp.config.sources({
       { name = 'nvim_lsp' },
-      -- { name = 'vsnip' }, -- For vsnip users.
       { name = 'luasnip' }, -- For luasnip users.
-      -- { name = 'ultisnips' }, -- For ultisnips users.
-      -- { name = 'snippy' }, -- For snippy users.
-    }, {
       { name = 'buffer' },
-      { name = 'path' },
+      { name = 'path' }
       -- Notice that spell requires: vim.opt.spell = true
-      { name = 'spell' },
+      -- { name = 'spell' }
     })
   })
 
@@ -232,7 +236,9 @@ lua << EOF
   require("null-ls").setup({
       -- you must define at least one source for the plugin to work
       sources = {
-          require("null-ls").builtins.diagnostics.flake8
+          require("null-ls").builtins.diagnostics.flake8,
+          require("null-ls").builtins.completion.spell
+          -- require("null-ls").builtins.diagnostics.misspell
       },
       on_attach = my_custom_on_attach
   })
@@ -262,7 +268,7 @@ EOF
 " airline --------------------------------------------------------------------
 
 set laststatus=2
-" let g:airline_theme             = 'gruvbox'
+" let g:airline_theme           = 'gruvbox'
 let g:airline_theme             = 'molokai'
 let g:airline_enable_branch     = 1
 let g:airline_powerline_fonts = 1
@@ -310,10 +316,6 @@ au BufRead,BufNewFile *.mx3 set filetype=go
 " Guide lines for identation
 " let g:indent_guides_guide_size = 1
 
-" Underline for spell
-hi clear SpellBad
-hi SpellBad cterm=underline
-
 " Fill the rest of a line with characters ------------------------------------
 function! FillLine( str )
     " set tw to the desired total length
@@ -360,5 +362,3 @@ noremap <Right> <NOP>
 " let g:riv_disable_folding = 1
 
 " ----------------------------------------------------------------------------
-"  vimTeX
-let g:tex_flavor = 'latex'
