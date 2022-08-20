@@ -1,38 +1,5 @@
-call plug#begin('~/.nvim/plugged')
-
-" Make sure you use single quotes
-
-" Colorschemes
-" Gruvbox with tree-sitter support
-Plug 'ellisonleao/gruvbox.nvim'
-Plug 'rebelot/kanagawa.nvim'
-
-" Treesitter for better highlight
-Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-" Make treesitter work with nvim spell
-Plug 'lewis6991/spellsitter.nvim'
-
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
-
-Plug 'tpope/vim-surround'
-
-Plug 'neovim/nvim-lspconfig'
-" Install language servers automatically:
-Plug 'williamboman/nvim-lsp-installer'
-
-Plug 'hrsh7th/cmp-nvim-lsp'
-Plug 'hrsh7th/cmp-buffer'
-Plug 'hrsh7th/nvim-cmp'
-Plug 'L3MON4D3/LuaSnip'
-Plug 'saadparwaiz1/cmp_luasnip'
-Plug 'rafamadriz/friendly-snippets'
-
-Plug 'nvim-lua/plenary.nvim'
-Plug 'jose-elias-alvarez/null-ls.nvim'
-
-" Add plugins to &runtimepath
-call plug#end()
+" Use Packer to start plugins
+lua require('plugins')
 
 " Theme ----------------------------------------------------------------------
 " set background=dark
@@ -212,13 +179,24 @@ lua << EOF
     sources = cmp.config.sources({
       { name = 'nvim_lsp' },
       { name = 'luasnip' }, -- For luasnip users.
-      { name = 'buffer' },
+      { name = 'buffer' }, -- for buffer words
       { name = 'path' }
       -- Notice that spell requires: vim.opt.spell = true
       -- { name = 'spell' }
     })
   })
 
+
+  require('lspconfig')['ltex'].setup {
+    on_attach = my_custom_on_attach,
+    capabilities = capabilities,
+    settings = {
+      ltex = {
+        language = {"en-GB"}
+        --disabledRules = { ['en-US'] = { 'PROFANITY' } },
+      },
+    },
+  }
 
   -- This assumes `ccls` exists on path
   -- nvim_lsp.ccls.setup {
@@ -237,8 +215,8 @@ lua << EOF
       -- you must define at least one source for the plugin to work
       sources = {
           require("null-ls").builtins.diagnostics.flake8,
-          require("null-ls").builtins.completion.spell
-          -- require("null-ls").builtins.diagnostics.misspell
+          require("null-ls").builtins.completion.spell,
+          require("null-ls").builtins.diagnostics.misspell.with({filetypes = { "tex", "text" }}),
       },
       on_attach = my_custom_on_attach
   })
@@ -267,14 +245,14 @@ EOF
 
 " airline --------------------------------------------------------------------
 
-set laststatus=2
-" let g:airline_theme           = 'gruvbox'
-let g:airline_theme             = 'molokai'
-let g:airline_enable_branch     = 1
-let g:airline_powerline_fonts = 1
-let g:airline#extensions#coc#enabled = 1
-
-set encoding=utf-8
+" set laststatus=2
+" " let g:airline_theme           = 'gruvbox'
+" let g:airline_theme             = 'molokai'
+" let g:airline_enable_branch     = 1
+" let g:airline_powerline_fonts = 1
+" let g:airline#extensions#coc#enabled = 1
+" 
+" set encoding=utf-8
 
 " ----------------------------------------------------------------------------
 
