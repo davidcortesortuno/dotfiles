@@ -65,6 +65,13 @@ lua << EOF
     }
   }
 
+  -- -------------------------------------------------------------------------
+  -- mason (ex lsp-installer)
+  require("mason").setup()
+  require("mason-lspconfig").setup {
+    ensure_installed = { "ltex", "pyright", "clangd", "rust_analyzer", "diagnosticls" },
+  }
+
   -- cmp ----------------------------------------------------------------------
 
   -- Set completeopt to have a better completion experience
@@ -123,24 +130,7 @@ lua << EOF
 
   -- nvim-cmp supports additional completion capabilities
   local capabilities = vim.lsp.protocol.make_client_capabilities()
-  capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
-
-  -- -------------------------------------------------------------------------
-  -- lsp installer
-  local lsp_installer = require("nvim-lsp-installer")
-  lsp_installer.on_server_ready(function(server)
-    local opts = {
-    	on_attach = my_custom_on_attach,
-    	capabilities = capabilities
-    }
-    opts.settings = {
-      format = {enable = true},
-    }
-    -- This setup() function is exactly the same as lspconfig's setup function
-    -- (:help lspconfig-quickstart)
-    server:setup(opts)
-    -- vim.cmd [[ do User LspAttachBuffers ]]
-  end)
+  capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
   -- Setup nvim-cmp. ---------------------------------------------------------
   local cmp = require('cmp')
@@ -212,14 +202,24 @@ lua << EOF
 
   -- null-ls configuration:
   require("null-ls").setup({
-      -- you must define at least one source for the plugin to work
-      sources = {
-          require("null-ls").builtins.diagnostics.flake8,
-          require("null-ls").builtins.completion.spell,
-          require("null-ls").builtins.diagnostics.misspell.with({filetypes = { "tex", "text" }}),
-      },
-      on_attach = my_custom_on_attach
+    -- you must define at least one source for the plugin to work
+    -- flake8: ignore long lines error (E501)
+    sources = {
+        require("null-ls").builtins.diagnostics.flake8.with({
+          extra_args={"--ignore=E501"},
+        }),
+        require("null-ls").builtins.completion.spell,
+        require("null-ls").builtins.diagnostics.misspell.with({filetypes = { "tex", "text" }}),
+        require("null-ls").builtins.diagnostics.proselint,
+    },
+    on_attach = my_custom_on_attach
   })
+  -- Use internal formatting for bindings like gq: https://github.com/jose-elias-alvarez/null-ls.nvim/issues/1131 
+   vim.api.nvim_create_autocmd('LspAttach', { 
+     callback = function(args) 
+       vim.bo[args.buf].formatexpr = nil 
+     end, 
+   })
   -- nvim_lsp["null-ls"].setup({
   --     -- see the nvim-lspconfig documentation for available configuration options
   --     on_attach = my_custom_on_attach
