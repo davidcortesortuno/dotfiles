@@ -88,3 +88,15 @@ vim.api.nvim_create_autocmd('LspAttach', {
 --     -- see the nvim-lspconfig documentation for available configuration options
 --     on_attach = my_custom_on_attach
 -- })
+
+-- This assumes `ccls` exists on path
+-- nvim_lsp.ccls.setup {
+--   on_attach = my_custom_on_attach,
+--   capabilities = capabilities,
+--   filetypes = {"c", "cpp"},
+--   init_options = {
+--     cache = {
+--       directory = ".ccls-cache";
+--     };
+--   }
+-- }
