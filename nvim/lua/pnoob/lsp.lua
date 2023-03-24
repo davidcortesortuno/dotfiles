@@ -1,12 +1,30 @@
 -- Mason (ex lsp-installer)
 
+local lspconfig = require('lspconfig')
+
 require("mason").setup()
 require("mason-lspconfig").setup {
     ensure_installed = { "ltex", "pyright", "clangd", "rust_analyzer", "diagnosticls" },
 }
 
-
-local nvim_lsp = require('lspconfig')
+require('mason-lspconfig').setup_handlers({
+    function(server)
+      lspconfig[server].setup({})
+    end,
+    -- Next we set dedicated handlers for specific servers:
+    ['ltex'] = function()
+        lspconfig['ltex'].setup {
+            on_attach = my_custom_on_attach,
+            capabilities = capabilities,
+            settings = {
+                ltex = {
+                    language = {"en-GB"}
+                    --disabledRules = { ['en-US'] = { 'PROFANITY' } },
+                },
+            },
+        }
+        end
+})
 
 -- Use an on_attach function to only map the following keys
 -- after the language server attaches to the current buffer
@@ -52,23 +70,12 @@ end
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
-require('lspconfig')['ltex'].setup {
-on_attach = my_custom_on_attach,
-capabilities = capabilities,
-settings = {
-  ltex = {
-    language = {"en-GB"}
-    --disabledRules = { ['en-US'] = { 'PROFANITY' } },
-  },
-},
-}
-
 -- null-ls configuration:
 require("null-ls").setup({
 -- you must define at least one source for the plugin to work
 -- flake8: ignore long lines error (E501)
 sources = {
-    require("null-ls").builtins.diagnostics.flake8.with({
+    require("null-ls").builtins.diagnostics.ruff.with({
       extra_args={"--ignore=E501"},
     }),
     require("null-ls").builtins.completion.spell,
@@ -84,7 +91,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
    vim.bo[args.buf].formatexpr = nil 
  end, 
 })
--- nvim_lsp["null-ls"].setup({
+-- lspconfig["null-ls"].setup({
 --     -- see the nvim-lspconfig documentation for available configuration options
 --     on_attach = my_custom_on_attach
 -- })
