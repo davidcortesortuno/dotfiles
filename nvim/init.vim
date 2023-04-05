@@ -15,7 +15,7 @@ lua require('pnoob.autocommands')
 " filetype indent plugin on
 
 " ----------------------------------------------------------------------------
-
+let g:python3_host_prog = '~/mambaforge/bin/python'
 
 
 " Fill the rest of a line with characters ------------------------------------

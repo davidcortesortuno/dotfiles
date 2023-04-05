@@ -2,6 +2,17 @@
 
 local lspconfig = require('lspconfig')
 
+-- Disable virtual text
+vim.diagnostic.config({
+    virtual_text = false,
+})
+
+-- Word dictionary from nvim to be used in ltex-ls
+local words = {}
+for word in io.open(vim.fn.stdpath("config") .. "/spell/en.utf-8.add", "r"):lines() do
+	table.insert(words, word)
+end
+
 require("mason").setup()
 require("mason-lspconfig").setup {
     ensure_installed = { "ltex", "pyright", "clangd", "rust_analyzer", "diagnosticls" },
@@ -18,7 +29,13 @@ require('mason-lspconfig').setup_handlers({
             capabilities = capabilities,
             settings = {
                 ltex = {
-                    language = {"en-GB"}
+                    language = {"en-GB", "en_US"},
+                    additionalRules = {
+                        languageModel = '~/ngrams-en/',
+                    },
+                    dictionary = {
+                        ["en-US"] = words,
+                    },
                     --disabledRules = { ['en-US'] = { 'PROFANITY' } },
                 },
             },
@@ -79,7 +96,7 @@ sources = {
       extra_args={"--ignore=E501"},
     }),
     require("null-ls").builtins.completion.spell,
-    require("null-ls").builtins.diagnostics.misspell.with({filetypes = { "tex", "text" }}),
+    -- require("null-ls").builtins.diagnostics.misspell.with({filetypes = { "tex", "text" }}),
     require("null-ls").builtins.diagnostics.proselint,
 },
 on_attach = my_custom_on_attach
