@@ -8,6 +8,29 @@ return {
             -- pyright will be automatically installed with mason and loaded with lspconfig
             pyright = {},
             texlab = {},
+            ltex = {
+                filetypes = {
+                    "bib",
+                    "gitcommit",
+                    "latex",
+                    "tex",
+                    "mail",
+                    "markdown",
+                    "norg",
+                    "org",
+                    "pandoc",
+                    "rst",
+                    "text",
+                },
+                settings = {
+                    -- https://valentjn.github.io/ltex/settings.html
+                    ltex = {
+                        -- unwanted checks are still occurring, often delaying CodeActions
+                        checkFrequency = "save",
+                        language = "en-GB",
+                    },
+                },
+            },
         },
         setup = {
             clangd = function(_, opts)
