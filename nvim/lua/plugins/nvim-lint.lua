@@ -6,7 +6,7 @@ return {
         events = { "BufWritePost", "BufReadPost", "InsertLeave" },
         linters_by_ft = {
             fish = { "fish" },
-            python = { "ruff" },
+            python = { "flake8" },
             text = { "proselint" },
             tex = { "proselint" },
         },
