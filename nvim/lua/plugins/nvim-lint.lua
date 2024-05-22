@@ -12,6 +12,7 @@ return {
         },
         ---@type table<string,table>
         linters = {
+            flake8 = {args={"--ignore=E501"}},
             -- -- Example of using selene only when a selene.toml file is present
             -- selene = {
             --   -- `condition` is another LazyVim extension that allows you to
