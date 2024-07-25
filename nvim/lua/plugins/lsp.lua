@@ -1,4 +1,3 @@
--- add pyright to lspconfig
 return {
     "neovim/nvim-lspconfig",
     ---@class PluginLspOpts
@@ -6,10 +5,13 @@ return {
         ---@type lspconfig.options
         servers = {
             ruff_lsp = {},
-            -- pyright will be automatically installed with mason and loaded with lspconfig
-            pyright = {},
             texlab = {},
             ltex = {
+                languageToolOrg = {
+                    username = "",
+                    apiKey = "",
+                },
+                languageToolHttpServerUri = "https://api.languagetoolplus.com",
                 filetypes = {
                     "bib",
                     "gitcommit",

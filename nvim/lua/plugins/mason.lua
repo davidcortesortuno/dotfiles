@@ -8,9 +8,8 @@ if true then
                 ensure_installed = {
                     "stylua",
                     -- "shellcheck",
-                    -- "shfmt",
+                    "ruff-lsp",
                     "flake8",
-                    "pyright",
                 },
             },
         },
